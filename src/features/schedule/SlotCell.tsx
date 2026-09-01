@@ -4,7 +4,7 @@ import type { ReactNode } from 'react'
 import type { Placement, WeekDay } from '@/domain/types'
 import { useDragState } from '@/features/dnd/DragContext'
 import { slotDroppableId } from '@/features/dnd/dragIds'
-import { cn } from '@/lib/cn'
+import { cn } from '@/lib/utils'
 import { useSchedule } from '@/state/ScheduleContext'
 
 const TONE = {

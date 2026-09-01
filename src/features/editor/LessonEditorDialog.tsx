@@ -1,16 +1,35 @@
 import { Copy, Trash2, X } from 'lucide-react'
-import { Dialog } from 'radix-ui'
 import { useMemo } from 'react'
 
-import { Button } from '@/components/ui/Button'
-import { ConflictList } from '@/components/ui/ConflictList'
+import { ConflictList } from '@/components/schedule/ConflictList'
+import { Button } from '@/components/ui/button'
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Separator } from '@/components/ui/separator'
 import { findConflicts } from '@/domain/conflicts'
 import { evaluateWeek } from '@/domain/placement'
-import { cn } from '@/lib/cn'
+import type { ConflictCode, WeekDay } from '@/domain/types'
 import { useSchedule } from '@/state/ScheduleContext'
 
-const fieldClassName =
-  'squircle-md bg-background text-foreground shadow-soft w-full cursor-pointer border border-transparent px-2 py-2 text-xs font-semibold focus:border-foreground focus:outline-none'
+interface EditorOption {
+  value: string
+  label: string
+}
 
 interface LessonEditorDialogProps {
   lessonId: string | null
@@ -25,55 +44,54 @@ export function LessonEditorDialog({ lessonId, onClose, onNotice }: LessonEditor
   const section = lesson ? index.sectionById.get(lesson.sectionId) : undefined
   const course = section ? index.courseById.get(section.courseId) : undefined
 
-  const conflicts = useMemo(() => {
-    if (!lesson) return []
-    return findConflicts(
-      {
-        sectionId: lesson.sectionId,
-        day: lesson.day,
-        timeSlotId: lesson.timeSlotId,
-        teacherId: lesson.teacherId,
-        roomId: lesson.roomId,
-      },
-      ruleContextFor(lesson.id),
-    )
+  const conflictsFor = useMemo(() => {
+    if (!lesson) return null
+    return (teacherId: string, roomId: string) =>
+      findConflicts(
+        { sectionId: lesson.sectionId, day: lesson.day, timeSlotId: lesson.timeSlotId, teacherId, roomId },
+        ruleContextFor(lesson.id),
+      )
   }, [lesson, ruleContextFor])
 
-  const teacherOptions = useMemo(() => {
-    if (!lesson || !section) return []
+  const conflicts = useMemo(
+    () => (lesson && conflictsFor ? conflictsFor(lesson.teacherId, lesson.roomId) : []),
+    [conflictsFor, lesson],
+  )
+
+  const teacherOptions = useMemo<EditorOption[]>(() => {
+    if (!lesson || !section || !conflictsFor) return []
     const ids = new Set([...section.allowedTeacherIds, lesson.teacherId])
     if (section.teacherId) ids.add(section.teacherId)
+    const blocking: ConflictCode[] = ['TEACHER_BUSY', 'TEACHER_BLOCKED']
 
     return [...ids].map((teacherId) => {
-      const blocking = findConflicts(
-        { sectionId: lesson.sectionId, day: lesson.day, timeSlotId: lesson.timeSlotId, teacherId, roomId: lesson.roomId },
-        ruleContextFor(lesson.id),
-      ).filter((conflict) => conflict.code === 'TEACHER_BUSY' || conflict.code === 'TEACHER_BLOCKED')
-
-      return {
-        id: teacherId,
-        label: index.teacherById.get(teacherId)?.name ?? teacherId,
-        blocked: blocking.length > 0,
-      }
+      const name = index.teacherById.get(teacherId)?.name ?? teacherId
+      const busy = conflictsFor(teacherId, lesson.roomId).some((conflict) =>
+        blocking.includes(conflict.code),
+      )
+      return { value: teacherId, label: busy ? `${name} — занят` : name }
     })
-  }, [index.teacherById, lesson, ruleContextFor, section])
+  }, [conflictsFor, index.teacherById, lesson, section])
 
-  const roomOptions = useMemo(() => {
-    if (!lesson) return []
+  const roomOptions = useMemo<EditorOption[]>(() => {
+    if (!lesson || !conflictsFor) return []
+    const blocking: ConflictCode[] = ['ROOM_BUSY', 'ROOM_CAPACITY']
+
     return dataset.rooms.map((room) => {
-      const blocking = findConflicts(
-        { sectionId: lesson.sectionId, day: lesson.day, timeSlotId: lesson.timeSlotId, teacherId: lesson.teacherId, roomId: room.id },
-        ruleContextFor(lesson.id),
-      ).filter((conflict) => conflict.code === 'ROOM_BUSY' || conflict.code === 'ROOM_CAPACITY')
-
-      return { id: room.id, label: `${room.name} · ${room.capacity} мест`, blocked: blocking.length > 0 }
+      const label = `${room.name} · ${room.capacity} мест`
+      const unfit = conflictsFor(lesson.teacherId, room.id).some((conflict) =>
+        blocking.includes(conflict.code),
+      )
+      return { value: room.id, label: unfit ? `${label} — не подходит` : label }
     })
-  }, [dataset.rooms, lesson, ruleContextFor])
+  }, [conflictsFor, dataset.rooms, lesson])
 
   const duplicate = () => {
     if (!lesson) return
     const week = evaluateWeek(lesson.sectionId, ruleContextFor())
-    const free = [...week.entries()].find(([, placement]) => placement.status === 'valid' && placement.assignment)
+    const free = [...week.entries()].find(
+      ([, placement]) => placement.status === 'valid' && placement.assignment,
+    )
 
     if (!free) {
       onNotice('Свободного слота без конфликтов для копии не нашлось')
@@ -82,11 +100,13 @@ export function LessonEditorDialog({ lessonId, onClose, onNotice }: LessonEditor
 
     const [key, placement] = free
     const [day, timeSlotId] = key.split('|')
+    if (!placement.assignment) return
+
     run({
       type: 'duplicate',
       lessonId: lesson.id,
-      slot: { day: day as typeof lesson.day, timeSlotId },
-      assignment: { teacherId: placement.assignment!.teacherId, roomId: placement.assignment!.roomId },
+      slot: { day: day as WeekDay, timeSlotId },
+      assignment: { teacherId: placement.assignment.teacherId, roomId: placement.assignment.roomId },
     })
 
     const dayLabel = dataset.meta.weekDays.find((entry) => entry.id === day)?.label ?? day
@@ -105,83 +125,93 @@ export function LessonEditorDialog({ lessonId, onClose, onNotice }: LessonEditor
   const timeSlot = lesson ? index.timeSlotById.get(lesson.timeSlotId) : undefined
 
   return (
-    <Dialog.Root open={lesson !== null} onOpenChange={(open) => !open && onClose()}>
-      <Dialog.Portal>
-        <Dialog.Overlay className="fixed inset-0 z-40 bg-black/25 backdrop-blur-[2px]" />
-        <Dialog.Content
-          className={cn(
-            'squircle-2xl bg-muted shadow-lift fixed top-1/2 left-1/2 z-50 flex w-[min(24rem,calc(100vw-2rem))]',
-            '-translate-x-1/2 -translate-y-1/2 flex-col gap-3 p-4',
-          )}
-        >
-          {lesson && section ? (
-            <>
-              <header className="flex items-start gap-2">
-                <div className="flex min-w-0 flex-col gap-0.5">
-                  <Dialog.Title className="font-mono text-sm font-bold tracking-tight">
-                    {section.code}
-                  </Dialog.Title>
-                  <Dialog.Description className="text-muted-foreground text-xs">
-                    {course?.name}
-                  </Dialog.Description>
-                </div>
-                <Dialog.Close asChild>
-                  <Button variant="ghost" size="iconSm" className="ml-auto" aria-label="Закрыть">
-                    <X aria-hidden />
-                  </Button>
-                </Dialog.Close>
-              </header>
+    <Dialog open={lesson !== null} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent showCloseButton={false} className="gap-3">
+        {lesson && section ? (
+          <>
+            <DialogHeader className="pr-8">
+              <DialogTitle className="font-mono text-base font-bold tracking-[-0.02em]">
+                {section.code}
+              </DialogTitle>
+              <DialogDescription>{course?.name}</DialogDescription>
+            </DialogHeader>
 
-              <p className="label-caps">
-                {dayLabel}, {timeSlot?.start}–{timeSlot?.end} · {section.studentsCount} студентов
-              </p>
+            <DialogClose
+              render={
+                <Button
+                  variant="ghost"
+                  size="icon-sm"
+                  aria-label="Закрыть"
+                  className="absolute top-3 right-3"
+                />
+              }
+            >
+              <X aria-hidden />
+            </DialogClose>
 
-              <label className="flex flex-col gap-1">
-                <span className="label-caps">Преподаватель</span>
-                <select
-                  value={lesson.teacherId}
-                  onChange={(event) => run({ type: 'reassign', lessonId: lesson.id, teacherId: event.target.value })}
-                  className={fieldClassName}
-                >
+            <p className="label-caps">
+              {dayLabel}, {timeSlot?.start}–{timeSlot?.end} · {section.studentsCount} студентов
+            </p>
+
+            <div className="flex flex-col gap-1.5">
+              <Label>Преподаватель</Label>
+              <Select
+                items={teacherOptions}
+                value={lesson.teacherId}
+                onValueChange={(teacherId) =>
+                  teacherId && run({ type: 'reassign', lessonId: lesson.id, teacherId })
+                }
+              >
+                <SelectTrigger aria-label="Преподаватель" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
                   {teacherOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.blocked ? `${option.label} — занят` : option.label}
-                    </option>
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
                   ))}
-                </select>
-              </label>
+                </SelectContent>
+              </Select>
+            </div>
 
-              <label className="flex flex-col gap-1">
-                <span className="label-caps">Аудитория</span>
-                <select
-                  value={lesson.roomId}
-                  onChange={(event) => run({ type: 'reassign', lessonId: lesson.id, roomId: event.target.value })}
-                  className={fieldClassName}
-                >
+            <div className="flex flex-col gap-1.5">
+              <Label>Аудитория</Label>
+              <Select
+                items={roomOptions}
+                value={lesson.roomId}
+                onValueChange={(roomId) => roomId && run({ type: 'reassign', lessonId: lesson.id, roomId })}
+              >
+                <SelectTrigger aria-label="Аудитория" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
                   {roomOptions.map((option) => (
-                    <option key={option.id} value={option.id}>
-                      {option.blocked ? `${option.label} — не подходит` : option.label}
-                    </option>
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
                   ))}
-                </select>
-              </label>
+                </SelectContent>
+              </Select>
+            </div>
 
-              <ConflictList conflicts={conflicts} emptyMessage="Конфликтов нет" />
+            <ConflictList conflicts={conflicts} emptyMessage="Конфликтов нет" />
 
-              <footer className="flex gap-1.5 pt-1">
-                <Button size="sm" onClick={duplicate}>
-                  <Copy aria-hidden />
-                  Копировать
-                </Button>
-                <Button size="sm" variant="danger" onClick={remove}>
-                  <Trash2 aria-hidden />
-                  Убрать
-                </Button>
-              </footer>
-            </>
-          ) : null}
-        </Dialog.Content>
-      </Dialog.Portal>
-    </Dialog.Root>
+            <Separator />
+
+            <DialogFooter className="sm:justify-start">
+              <Button variant="secondary" size="sm" onClick={duplicate}>
+                <Copy aria-hidden />
+                Копировать
+              </Button>
+              <Button variant="destructive" size="sm" onClick={remove}>
+                <Trash2 aria-hidden />
+                Убрать
+              </Button>
+            </DialogFooter>
+          </>
+        ) : null}
+      </DialogContent>
+    </Dialog>
   )
 }

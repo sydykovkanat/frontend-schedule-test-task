@@ -31,6 +31,11 @@ const lessonCard = (code: string, room: string) =>
 
 const status = () => screen.getByRole('status', { name: 'Подсказка' })
 
+async function choose(user: ReturnType<typeof userEvent.setup>, field: string, option: RegExp) {
+  await user.click(screen.getByRole('combobox', { name: field }))
+  await user.click(await screen.findByRole('option', { name: option }))
+}
+
 beforeEach(() => {
   window.localStorage.clear()
 })
@@ -77,7 +82,7 @@ describe('рабочий экран', () => {
   it('фильтрует секции по преподавателю', async () => {
     const user = open()
 
-    await user.selectOptions(screen.getByLabelText('Фильтр по преподавателю'), 'T4')
+    await choose(user, 'Фильтр по преподавателю', /Е\. Петрова/)
 
     const visible = within(sectionsPanel()).getAllByRole('button', { pressed: false })
     expect(visible).toHaveLength(3)
@@ -132,7 +137,7 @@ describe('редактор занятия', () => {
 
     await user.click(lessonCard('DB202-01', 'LAB-1'))
     const dialog = await screen.findByRole('dialog')
-    await user.selectOptions(within(dialog).getByLabelText(/Аудитория/i), 'R301')
+    await choose(user, 'Аудитория', /B-301/)
     await user.click(within(dialog).getByLabelText('Закрыть'))
 
     expect(lessonCard('DB202-01', 'B-301')).toBeInTheDocument()
@@ -143,7 +148,7 @@ describe('редактор занятия', () => {
 
     await user.click(lessonCard('DB202-01', 'LAB-1'))
     const dialog = await screen.findByRole('dialog')
-    await user.selectOptions(within(dialog).getByLabelText(/Преподаватель/i), 'T1')
+    await choose(user, 'Преподаватель', /Александр Иванов/)
     await user.click(within(dialog).getByLabelText('Закрыть'))
 
     expect(lessonCard('DB202-01', 'LAB-1')).toHaveTextContent('А. Иванов')
@@ -154,7 +159,7 @@ describe('редактор занятия', () => {
 
     await user.click(lessonCard('DB202-01', 'LAB-1'))
     const dialog = await screen.findByRole('dialog')
-    await user.selectOptions(within(dialog).getByLabelText(/Аудитория/i), 'R101')
+    await choose(user, 'Аудитория', /A-101/)
 
     expect(dialog).toHaveTextContent('A-101')
     expect(dialog).toHaveTextContent(/не компьютерный класс/i)

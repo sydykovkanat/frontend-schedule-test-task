@@ -1,6 +1,8 @@
 import { AlertCircle, RefreshCw } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 import { useScheduleData } from '@/data/useScheduleData'
 import { ScheduleProvider } from '@/state/ScheduleProvider'
 
@@ -8,11 +10,26 @@ import { Workbench } from './Workbench'
 
 function LoadingScreen() {
   return (
-    <div className="flex h-dvh flex-col gap-3 px-4 py-5 md:px-6" aria-busy="true" aria-label="Загрузка расписания">
-      <div className="bg-muted squircle-lg h-10 w-64 animate-pulse" />
-      <div className="grid flex-1 gap-3 lg:grid-cols-[20.5rem_minmax(0,1fr)]">
-        <div className="bg-muted squircle-2xl animate-pulse" />
-        <div className="bg-muted squircle-2xl animate-pulse" />
+    <div
+      className="mx-auto flex h-dvh w-full max-w-[110rem] flex-col gap-8 px-6 py-8 md:px-10"
+      aria-busy="true"
+      aria-label="Загрузка расписания"
+    >
+      <div className="flex items-end justify-between gap-10">
+        <div className="flex flex-col gap-2">
+          <Skeleton className="h-7 w-72" />
+          <Skeleton className="h-4 w-56" />
+        </div>
+        <Skeleton className="h-7 w-40" />
+      </div>
+      <div className="grid flex-1 gap-x-10 lg:grid-cols-[19rem_minmax(0,1fr)]">
+        <div className="flex flex-col gap-3">
+          <Skeleton className="h-9 w-full" />
+          {Array.from({ length: 6 }).map((_, position) => (
+            <Skeleton key={position} className="h-[6.25rem] w-full" />
+          ))}
+        </div>
+        <Skeleton className="h-full w-full" />
       </div>
     </div>
   )
@@ -21,15 +38,17 @@ function LoadingScreen() {
 function ErrorScreen({ message, onRetry }: { message: string; onRetry: () => void }) {
   return (
     <div className="flex h-dvh items-center justify-center p-6">
-      <div className="squircle-2xl bg-muted flex max-w-sm flex-col items-start gap-3 p-5">
-        <AlertCircle className="text-destructive size-6" aria-hidden />
-        <h1 className="text-sm font-bold">Расписание не загрузилось</h1>
-        <p className="text-muted-foreground text-xs leading-relaxed">{message}</p>
-        <Button size="sm" variant="primary" onClick={onRetry}>
-          <RefreshCw aria-hidden />
-          Попробовать снова
-        </Button>
-      </div>
+      <Alert className="max-w-md">
+        <AlertCircle aria-hidden />
+        <AlertTitle>Расписание не загрузилось</AlertTitle>
+        <AlertDescription>
+          {message}
+          <Button variant="outline" size="sm" onClick={onRetry} className="mt-3">
+            <RefreshCw aria-hidden />
+            Попробовать снова
+          </Button>
+        </AlertDescription>
+      </Alert>
     </div>
   )
 }

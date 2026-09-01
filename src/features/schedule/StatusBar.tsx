@@ -1,14 +1,7 @@
+import { Kbd, KbdGroup } from '@/components/ui/kbd'
 import { useDragState } from '@/features/dnd/DragContext'
-import { cn } from '@/lib/cn'
+import { cn } from '@/lib/utils'
 import { useSchedule } from '@/state/ScheduleContext'
-
-function Key({ children }: { children: string }) {
-  return (
-    <kbd className="squircle-md bg-secondary text-foreground px-1.5 py-0.5 font-mono text-xs font-semibold">
-      {children}
-    </kbd>
-  )
-}
 
 export function StatusBar() {
   const { index } = useSchedule()
@@ -46,8 +39,19 @@ export function StatusBar() {
         </>
       ) : (
         <span className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
-          Перетащите секцию в сетку или выберите её кликом. С клавиатуры: <Key>Tab</Key> до карточки,
-          <Key>Пробел</Key> взять, стрелки — выбрать слот, <Key>Пробел</Key> поставить.
+          Перетащите секцию в сетку или выберите её кликом. С клавиатуры:
+          <KbdGroup>
+            <Kbd>Tab</Kbd>
+          </KbdGroup>
+          до карточки,
+          <KbdGroup>
+            <Kbd>Пробел</Kbd>
+          </KbdGroup>
+          взять, стрелки — выбрать слот,
+          <KbdGroup>
+            <Kbd>Пробел</Kbd>
+          </KbdGroup>
+          поставить.
         </span>
       )}
     </div>

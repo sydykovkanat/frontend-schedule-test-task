@@ -1,7 +1,32 @@
 import { Redo2, RotateCcw, Undo2 } from 'lucide-react'
 
-import { Button } from '@/components/ui/Button'
+import { Button } from '@/components/ui/button'
+import { Separator } from '@/components/ui/separator'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useSchedule } from '@/state/ScheduleContext'
+
+interface ToolbarActionProps {
+  label: string
+  hint: string
+  disabled?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}
+
+function ToolbarAction({ label, hint, disabled, onClick, children }: ToolbarActionProps) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <Button variant="ghost" size="icon" aria-label={label} disabled={disabled} onClick={onClick}>
+            {children}
+          </Button>
+        }
+      />
+      <TooltipContent>{hint}</TooltipContent>
+    </Tooltip>
+  )
+}
 
 export function Toolbar() {
   const { summary, undo, redo, canUndo, canRedo, resetToMock } = useSchedule()
@@ -19,7 +44,7 @@ export function Toolbar() {
         </p>
       </div>
 
-      <div className="flex items-end gap-8">
+      <div className="flex items-center gap-5">
         <p className="flex items-baseline gap-1.5">
           <span className="tnum font-mono text-[1.75rem] leading-none font-bold tracking-tight">
             {summary.placed}
@@ -30,16 +55,18 @@ export function Toolbar() {
           <span className="text-muted-foreground ml-1 text-sm">занятий</span>
         </p>
 
-        <div className="flex items-center gap-1 pb-0.5">
-          <Button variant="ghost" size="icon" onClick={undo} disabled={!canUndo} aria-label="Отменить" title="Отменить (Ctrl+Z)">
+        <Separator orientation="vertical" className="h-6" />
+
+        <div className="flex items-center gap-1">
+          <ToolbarAction label="Отменить" hint="Отменить · Ctrl+Z" disabled={!canUndo} onClick={undo}>
             <Undo2 aria-hidden />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={redo} disabled={!canRedo} aria-label="Вернуть" title="Вернуть (Ctrl+Shift+Z)">
+          </ToolbarAction>
+          <ToolbarAction label="Вернуть" hint="Вернуть · Ctrl+Shift+Z" disabled={!canRedo} onClick={redo}>
             <Redo2 aria-hidden />
-          </Button>
-          <Button variant="ghost" size="icon" onClick={resetToMock} aria-label="Вернуть исходные данные" title="Вернуть исходные данные">
+          </ToolbarAction>
+          <ToolbarAction label="Вернуть исходные данные" hint="Вернуть исходные данные" onClick={resetToMock}>
             <RotateCcw aria-hidden />
-          </Button>
+          </ToolbarAction>
         </div>
       </div>
     </header>

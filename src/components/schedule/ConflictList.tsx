@@ -1,7 +1,7 @@
 import { AlertTriangle, Check, XCircle } from 'lucide-react'
 
 import type { Conflict } from '@/domain/types'
-import { cn } from '@/lib/cn'
+import { cn } from '@/lib/utils'
 
 interface ConflictListProps {
   conflicts: readonly Conflict[]

@@ -1,5 +1,5 @@
 import { useSchedule } from '@/state/ScheduleContext'
-import { cn } from '@/lib/cn'
+import { cn } from '@/lib/utils'
 
 import { useDragState } from './DragContext'
 import { TRASH_DROPPABLE_ID, type DragSource } from './dragIds'

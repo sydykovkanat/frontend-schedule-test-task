@@ -3,7 +3,7 @@ import { Undo2 } from 'lucide-react'
 
 import { useDragState } from '@/features/dnd/DragContext'
 import { TRASH_DROPPABLE_ID } from '@/features/dnd/dragIds'
-import { cn } from '@/lib/cn'
+import { cn } from '@/lib/utils'
 import { useSchedule } from '@/state/ScheduleContext'
 
 export function UnassignedDropZone() {

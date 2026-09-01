@@ -1,4 +1,13 @@
+import { SearchX } from 'lucide-react'
 import { useMemo, useRef, useState } from 'react'
+
+import {
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+} from '@/components/ui/empty'
 
 import { NO_FILTERS, filterSections, hasActiveFilters, type SectionFilters } from '@/domain/filtering'
 import { useDragState } from '@/features/dnd/DragContext'
@@ -54,9 +63,15 @@ export function SectionsPanel() {
         className="-mx-3 min-h-0 flex-1 overflow-y-auto px-3 [mask-image:linear-gradient(to_bottom,transparent,black_1.25rem,black_calc(100%-2rem),transparent)]"
       >
         {visibleSections.length === 0 ? (
-          <p className="text-muted-foreground py-10 text-center text-sm">
-            Ни одна секция не подходит под фильтры
-          </p>
+          <Empty className="py-10">
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <SearchX aria-hidden />
+              </EmptyMedia>
+              <EmptyTitle>Ничего не найдено</EmptyTitle>
+              <EmptyDescription>Ни одна секция не подходит под выбранные фильтры</EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           <div className="flex flex-col" style={{ gap: SECTION_CARD_GAP }}>
             <div style={{ height: window.paddingTop }} aria-hidden />

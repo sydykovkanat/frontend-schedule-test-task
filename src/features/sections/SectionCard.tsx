@@ -1,9 +1,9 @@
 import { useDraggable } from '@dnd-kit/core'
 
-import { ProgressPips } from '@/components/ui/ProgressPips'
+import { ProgressPips } from '@/components/schedule/ProgressPips'
 import type { Course, Section, SectionProgress, Teacher } from '@/domain/types'
 import { sectionDraggableId } from '@/features/dnd/dragIds'
-import { cn } from '@/lib/cn'
+import { cn } from '@/lib/utils'
 
 export const SECTION_CARD_HEIGHT = 106
 export const SECTION_CARD_GAP = 2

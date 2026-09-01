@@ -1,8 +1,9 @@
 import { useDraggable } from '@dnd-kit/core'
 
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import type { Conflict, Lesson } from '@/domain/types'
 import { lessonDraggableId } from '@/features/dnd/dragIds'
-import { cn } from '@/lib/cn'
+import { cn } from '@/lib/utils'
 import { useSchedule } from '@/state/ScheduleContext'
 
 interface LessonCardProps {
@@ -28,13 +29,12 @@ export function LessonCard({ lesson, conflicts, selected, onOpen }: LessonCardPr
       ? 'warning'
       : null
 
-  return (
+  const card = (
     <button
       ref={setNodeRef}
       {...attributes}
       {...listeners}
       onClick={onOpen}
-      title={conflicts.map((conflict) => conflict.message).join('\n') || undefined}
       className={cn(
         'squircle-md bg-muted relative flex w-full cursor-grab touch-none flex-col gap-0.5 px-2 py-1.5 text-left',
         'transition-[box-shadow,opacity] duration-150 ease-schedule hover:shadow-lift',
@@ -57,5 +57,20 @@ export function LessonCard({ lesson, conflicts, selected, onOpen }: LessonCardPr
         {room?.name} · {room?.capacity}
       </span>
     </button>
+  )
+
+  if (conflicts.length === 0) return card
+
+  return (
+    <Tooltip>
+      <TooltipTrigger render={card} />
+      <TooltipContent className="max-w-64">
+        <ul className="flex flex-col gap-1">
+          {conflicts.map((conflict) => (
+            <li key={conflict.code}>{conflict.message}</li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
   )
 }

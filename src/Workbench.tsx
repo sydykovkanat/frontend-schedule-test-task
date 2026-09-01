@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 
+import { TooltipProvider } from '@/components/ui/tooltip'
+
 import { LessonEditorDialog } from '@/features/editor/LessonEditorDialog'
 import { useDragState } from '@/features/dnd/DragContext'
 import { ScheduleDndProvider } from '@/features/dnd/ScheduleDndProvider'
@@ -68,11 +70,13 @@ export function Workbench() {
   useUndoShortcuts()
 
   return (
-    <div className="mx-auto flex h-dvh w-full max-w-[110rem] flex-col gap-8 px-6 py-8 md:px-10">
-      <Toolbar />
-      <ScheduleDndProvider onRequestEdit={setEditingLessonId}>
-        <Board editingLessonId={editingLessonId} onOpenLesson={setEditingLessonId} />
-      </ScheduleDndProvider>
-    </div>
+    <TooltipProvider>
+      <div className="mx-auto flex h-dvh w-full max-w-[110rem] flex-col gap-8 px-6 py-8 md:px-10">
+        <Toolbar />
+        <ScheduleDndProvider onRequestEdit={setEditingLessonId}>
+          <Board editingLessonId={editingLessonId} onOpenLesson={setEditingLessonId} />
+        </ScheduleDndProvider>
+      </div>
+    </TooltipProvider>
   )
 }
