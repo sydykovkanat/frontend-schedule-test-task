@@ -12,7 +12,12 @@ interface ConflictListProps {
 export function ConflictList({ conflicts, emptyMessage = 'Слот свободен', className }: ConflictListProps) {
   if (conflicts.length === 0) {
     return (
-      <p className={cn('flex items-start gap-1.5 text-xs text-success', className)}>
+      <p
+        className={cn(
+          'bg-ok-soft text-ok-ink flex items-start gap-1.5 rounded-lg px-2.5 py-2 text-[0.6875rem] font-semibold',
+          className,
+        )}
+      >
         <Check className="mt-px size-3.5 shrink-0" aria-hidden />
         {emptyMessage}
       </p>
@@ -25,8 +30,10 @@ export function ConflictList({ conflicts, emptyMessage = 'Слот свобод�
         <li
           key={conflict.code}
           className={cn(
-            'flex items-start gap-1.5 text-xs leading-snug',
-            conflict.level === 'error' ? 'text-destructive' : 'text-warning',
+            'flex items-start gap-1.5 rounded-lg px-2.5 py-2 text-[0.6875rem] leading-snug font-semibold',
+            conflict.level === 'error'
+              ? 'bg-danger-soft text-danger-ink'
+              : 'bg-warn-soft text-warn-ink',
           )}
         >
           {conflict.level === 'error' ? (

@@ -1,4 +1,5 @@
 import { blockedSlotKey, slotKey } from './keys'
+import { FALLBACK_TONE, buildToneMap, type CourseTone } from './palette'
 import type {
   Course,
   Lesson,
@@ -17,6 +18,8 @@ export interface ScheduleIndex {
   courseById: ReadonlyMap<string, Course>
   timeSlotById: ReadonlyMap<string, TimeSlot>
   blockedReasonByKey: ReadonlyMap<string, string>
+  toneByCourseId: ReadonlyMap<string, CourseTone>
+  toneBySectionId: ReadonlyMap<string, CourseTone>
 }
 
 export interface Occupancy {
@@ -30,6 +33,8 @@ function indexBy<T extends { id: string }>(items: readonly T[]): ReadonlyMap<str
 }
 
 export function buildScheduleIndex(dataset: ScheduleDataset): ScheduleIndex {
+  const toneByCourseId = buildToneMap(dataset.courses)
+
   return {
     dataset,
     sectionById: indexBy(dataset.sections),
@@ -41,6 +46,13 @@ export function buildScheduleIndex(dataset: ScheduleDataset): ScheduleIndex {
       dataset.teacherBlockedSlots.map((blocked) => [
         blockedSlotKey(blocked.teacherId, blocked.day, blocked.timeSlotId),
         blocked.reason,
+      ]),
+    ),
+    toneByCourseId,
+    toneBySectionId: new Map(
+      dataset.sections.map((section) => [
+        section.id,
+        toneByCourseId.get(section.courseId) ?? FALLBACK_TONE,
       ]),
     ),
   }

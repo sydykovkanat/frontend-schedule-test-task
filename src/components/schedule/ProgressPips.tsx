@@ -16,8 +16,8 @@ export function ProgressPips({ placed, required, complete = false, className }: 
         <span
           key={position}
           className={cn(
-            'h-[3px] flex-1 rounded-full transition-colors duration-200 ease-schedule',
-            position < placed ? (complete ? 'bg-success' : 'bg-foreground') : 'bg-border',
+            'ease-schedule h-[3px] flex-1 rounded-full transition-colors duration-200',
+            position < placed ? (complete ? 'bg-ok' : 'bg-tone') : 'bg-fill-active',
           )}
         />
       ))}

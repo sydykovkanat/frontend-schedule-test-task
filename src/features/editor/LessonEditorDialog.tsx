@@ -20,10 +20,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Separator } from '@/components/ui/separator'
 import { findConflicts } from '@/domain/conflicts'
+import { FALLBACK_TONE } from '@/domain/palette'
 import { evaluateWeek } from '@/domain/placement'
 import type { ConflictCode, WeekDay } from '@/domain/types'
+import { STUDENTS, plural } from '@/lib/plural'
 import { useSchedule } from '@/state/ScheduleContext'
 
 interface EditorOption {
@@ -43,6 +44,7 @@ export function LessonEditorDialog({ lessonId, onClose, onNotice }: LessonEditor
   const lesson = lessons.find((candidate) => candidate.id === lessonId) ?? null
   const section = lesson ? index.sectionById.get(lesson.sectionId) : undefined
   const course = section ? index.courseById.get(section.courseId) : undefined
+  const tone = lesson ? (index.toneBySectionId.get(lesson.sectionId) ?? FALLBACK_TONE) : FALLBACK_TONE
 
   const conflictsFor = useMemo(() => {
     if (!lesson) return null
@@ -126,12 +128,15 @@ export function LessonEditorDialog({ lessonId, onClose, onNotice }: LessonEditor
 
   return (
     <Dialog open={lesson !== null} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent showCloseButton={false} className="gap-3">
+      <DialogContent showCloseButton={false} data-tone={tone} className="gap-3.5">
         {lesson && section ? (
           <>
             <DialogHeader className="pr-8">
-              <DialogTitle className="font-mono text-base font-bold tracking-[-0.02em]">
-                {section.code}
+              <DialogTitle className="flex items-center gap-2">
+                <span aria-hidden className="bg-tone size-2.5 shrink-0 rounded-full" />
+                <span className="text-tone-ink font-mono text-[1.0625rem] font-bold tracking-[-0.02em]">
+                  {section.code}
+                </span>
               </DialogTitle>
               <DialogDescription>{course?.name}</DialogDescription>
             </DialogHeader>
@@ -142,19 +147,27 @@ export function LessonEditorDialog({ lessonId, onClose, onNotice }: LessonEditor
                   variant="ghost"
                   size="icon-sm"
                   aria-label="Закрыть"
-                  className="absolute top-3 right-3"
+                  className="absolute top-4 right-4"
                 />
               }
             >
               <X aria-hidden />
             </DialogClose>
 
-            <p className="label-caps">
-              {dayLabel}, {timeSlot?.start}–{timeSlot?.end} · {section.studentsCount} студентов
-            </p>
+            <div className="bg-fill flex items-center gap-2 rounded-lg px-3 py-2.5 text-[0.6875rem] font-semibold">
+              <span>{dayLabel}</span>
+              <span aria-hidden className="bg-fill-active size-[3px] shrink-0 rounded-full" />
+              <span className="tnum font-mono">
+                {timeSlot?.start}–{timeSlot?.end}
+              </span>
+              <span aria-hidden className="bg-fill-active size-[3px] shrink-0 rounded-full" />
+              <span className="tnum text-muted-foreground">
+                {section.studentsCount} {plural(section.studentsCount, STUDENTS)}
+              </span>
+            </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label>Преподаватель</Label>
+              <Label className="label-caps">Преподаватель</Label>
               <Select
                 items={teacherOptions}
                 value={lesson.teacherId}
@@ -176,7 +189,7 @@ export function LessonEditorDialog({ lessonId, onClose, onNotice }: LessonEditor
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label>Аудитория</Label>
+              <Label className="label-caps">Аудитория</Label>
               <Select
                 items={roomOptions}
                 value={lesson.roomId}
@@ -197,14 +210,12 @@ export function LessonEditorDialog({ lessonId, onClose, onNotice }: LessonEditor
 
             <ConflictList conflicts={conflicts} emptyMessage="Конфликтов нет" />
 
-            <Separator />
-
             <DialogFooter className="sm:justify-start">
-              <Button variant="secondary" size="sm" onClick={duplicate}>
+              <Button variant="secondary" onClick={duplicate}>
                 <Copy aria-hidden />
                 Копировать
               </Button>
-              <Button variant="destructive" size="sm" onClick={remove}>
+              <Button variant="danger" onClick={remove}>
                 <Trash2 aria-hidden />
                 Убрать
               </Button>
