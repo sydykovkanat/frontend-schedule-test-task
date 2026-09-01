@@ -29,7 +29,7 @@ export function SectionsPanel() {
   const change = (next: Partial<SectionFilters>) => setFilters((current) => ({ ...current, ...next }))
 
   return (
-    <section className="flex min-h-0 flex-col gap-4">
+    <section aria-label="Секции" className="flex min-h-0 flex-col gap-4">
       <div className="flex flex-col gap-4">
         <div className="flex items-baseline gap-2.5">
           <h2 className="label-caps">Секции</h2>

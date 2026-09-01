@@ -31,7 +31,7 @@ export function WeekGrid({ selectedLessonId, onOpenLesson }: WeekGridProps) {
   }, [lessons])
 
   return (
-    <div className="min-h-0 flex-1 overflow-auto">
+    <div role="group" aria-label="Недельное расписание" className="min-h-0 flex-1 overflow-auto">
       <div
         className="bg-border grid h-full min-w-[52rem] gap-px"
         style={{

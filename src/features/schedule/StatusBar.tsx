@@ -27,6 +27,7 @@ export function StatusBar() {
     <div
       role="status"
       aria-live="polite"
+      aria-label="Подсказка"
       className={cn(
         'flex min-h-8 shrink-0 flex-wrap items-center gap-x-2.5 gap-y-1.5 text-sm',
         notice ? 'text-foreground' : 'text-muted-foreground',
