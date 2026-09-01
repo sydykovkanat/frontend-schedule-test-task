@@ -1,5 +1,6 @@
 import { type ReactNode, useCallback, useEffect, useMemo, useReducer } from 'react'
 
+import { auditLessons } from '@/domain/audit'
 import { buildOccupancy, buildScheduleIndex } from '@/domain/indexes'
 import { buildProgressMap, summarizeWeek } from '@/domain/progress'
 import type { ScheduleDataset } from '@/domain/types'
@@ -54,6 +55,8 @@ export function ScheduleProvider({ dataset, children }: ScheduleProviderProps) {
     [index, occupancy, lessons],
   )
 
+  const audit = useMemo(() => auditLessons(lessons, ruleContextFor), [lessons, ruleContextFor])
+
   const run = useCallback((action: ScheduleAction) => dispatch({ type: 'apply', action }), [])
 
   const resetToMock = useCallback(() => {
@@ -66,6 +69,7 @@ export function ScheduleProvider({ dataset, children }: ScheduleProviderProps) {
       dataset,
       index,
       lessons,
+      audit,
       nextLessonId,
       progress,
       summary,
@@ -77,7 +81,19 @@ export function ScheduleProvider({ dataset, children }: ScheduleProviderProps) {
       canRedo: canRedo(history),
       resetToMock,
     }),
-    [dataset, index, lessons, nextLessonId, progress, summary, ruleContextFor, run, history, resetToMock],
+    [
+      dataset,
+      index,
+      lessons,
+      audit,
+      nextLessonId,
+      progress,
+      summary,
+      ruleContextFor,
+      run,
+      history,
+      resetToMock,
+    ],
   )
 
   return <ScheduleContext value={value}>{children}</ScheduleContext>

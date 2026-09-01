@@ -1,5 +1,6 @@
 import { createContext, use } from 'react'
 
+import type { LessonAudit } from '@/domain/audit'
 import type { RuleContext } from '@/domain/conflicts'
 import type { ScheduleIndex } from '@/domain/indexes'
 import type { WeekSummary } from '@/domain/progress'
@@ -11,6 +12,7 @@ export interface ScheduleContextValue {
   dataset: ScheduleDataset
   index: ScheduleIndex
   lessons: readonly Lesson[]
+  audit: LessonAudit
   nextLessonId: string
   progress: ReadonlyMap<string, SectionProgress>
   summary: WeekSummary

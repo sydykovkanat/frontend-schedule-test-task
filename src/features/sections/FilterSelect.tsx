@@ -24,7 +24,7 @@ export function FilterSelect({ label, placeholder, options, value, onChange }: F
 
   return (
     <Select items={items} value={value} onValueChange={onChange}>
-      <SelectTrigger size="sm" aria-label={label}>
+      <SelectTrigger size="sm" aria-label={label} className="w-full">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

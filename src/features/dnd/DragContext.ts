@@ -12,6 +12,7 @@ export interface DragContextValue {
   notice: string | null
   week: ReadonlyMap<string, Placement> | null
   placementAt: (day: WeekDay, timeSlotId: string) => Placement | undefined
+  placeFocusedAt: (day: WeekDay, timeSlotId: string) => void
   focusSection: (sectionId: string | null) => void
   setNotice: (message: string | null) => void
 }

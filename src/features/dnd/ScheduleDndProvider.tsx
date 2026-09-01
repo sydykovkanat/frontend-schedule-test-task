@@ -49,7 +49,7 @@ interface ScheduleDndProviderProps {
 }
 
 export function ScheduleDndProvider({ onRequestEdit, children }: ScheduleDndProviderProps) {
-  const { index, lessons, nextLessonId, ruleContextFor, run } = useSchedule()
+  const { index, lessons, nextLessonId, progress, ruleContextFor, run } = useSchedule()
 
   const [active, setActive] = useState<DragSource | null>(null)
   const [focusedSectionId, setFocusedSectionId] = useState<string | null>(null)
@@ -139,6 +139,43 @@ export function ScheduleDndProvider({ onRequestEdit, children }: ScheduleDndProv
     [index.sectionById, nextLessonId, onRequestEdit, run, sectionIdOfLesson, week],
   )
 
+  const placeFocusedAt = useCallback(
+    (day: WeekDay, timeSlotId: string) => {
+      if (!focusedSectionId || active) return
+
+      const placement = week?.get(slotKey(day, timeSlotId))
+      const section = index.sectionById.get(focusedSectionId)
+
+      if (!placement || placement.status === 'blocked' || !placement.assignment) {
+        setNotice(firstReason(placement))
+        return
+      }
+
+      const createdId = nextLessonId
+      run({
+        type: 'place',
+        sectionId: focusedSectionId,
+        slot: { day, timeSlotId },
+        assignment: {
+          teacherId: placement.assignment.teacherId,
+          roomId: placement.assignment.roomId,
+        },
+      })
+
+      const current = progress.get(focusedSectionId)
+      if (current && current.placed + 1 >= current.required) setFocusedSectionId(null)
+
+      if (placement.assignment.teacherAuto) onRequestEdit(createdId)
+
+      setNotice(
+        placement.status === 'warning'
+          ? `${section?.code ?? 'Занятие'}: ${firstReason(placement)}`
+          : null,
+      )
+    },
+    [active, focusedSectionId, index.sectionById, nextLessonId, onRequestEdit, progress, run, week],
+  )
+
   const handleDragCancel = useCallback(() => {
     setActive(null)
     setHoveredSlotKey(null)
@@ -178,10 +215,20 @@ export function ScheduleDndProvider({ onRequestEdit, children }: ScheduleDndProv
       notice,
       week: week ?? null,
       placementAt,
+      placeFocusedAt,
       focusSection: setFocusedSectionId,
       setNotice,
     }),
-    [active, focusedSectionId, highlightedSectionId, hoveredSlotKey, notice, week, placementAt],
+    [
+      active,
+      focusedSectionId,
+      highlightedSectionId,
+      hoveredSlotKey,
+      notice,
+      week,
+      placementAt,
+      placeFocusedAt,
+    ],
   )
 
   return (

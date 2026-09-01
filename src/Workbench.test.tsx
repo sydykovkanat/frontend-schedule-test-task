@@ -110,6 +110,37 @@ describe('рабочий экран', () => {
     expect(status()).toHaveTextContent('Перетащите секцию')
   })
 
+  it('крестик в поиске возвращает полный список', async () => {
+    const user = open()
+    const search = screen.getByLabelText('Поиск секции')
+
+    await user.type(search, 'базы данных')
+    expect(within(sectionsPanel()).getAllByRole('button', { pressed: false })).toHaveLength(1)
+
+    await user.click(screen.getByRole('button', { name: 'Очистить поиск' }))
+
+    expect(search).toHaveValue('')
+    expect(within(sectionsPanel()).getAllByRole('button', { pressed: false }).length).toBeGreaterThan(1)
+  })
+
+  it('Escape в поиске очищает запрос', async () => {
+    const user = open()
+    const search = screen.getByLabelText('Поиск секции')
+
+    await user.type(search, 'базы данных')
+    await user.keyboard('{Escape}')
+
+    expect(search).toHaveValue('')
+  })
+
+  it('слэш ставит фокус в поиск', async () => {
+    const user = open()
+
+    await user.keyboard('/')
+
+    expect(screen.getByLabelText('Поиск секции')).toHaveFocus()
+  })
+
   it('второй клик по той же секции тоже снимает выбор', async () => {
     const user = open()
 
@@ -117,6 +148,60 @@ describe('рабочий экран', () => {
     await user.click(sectionCard('MATH201-01'))
 
     expect(status()).toHaveTextContent('Перетащите секцию')
+  })
+})
+
+describe('постановка кликом', () => {
+  it('клик по свободному слоту ставит занятие выбранной секции', async () => {
+    const user = open()
+
+    await user.click(sectionCard('MATH201-01'))
+    const free = screen.getAllByRole('button', { name: /^Поставить MATH201-01/ })
+    await user.click(free[0])
+
+    expect(sectionCard('MATH201-01')).toHaveTextContent('2/2')
+  })
+
+  it('клик по закрытому слоту ничего не ставит и объясняет причину', async () => {
+    const user = open()
+
+    await user.click(sectionCard('MATH201-01'))
+    const blocked = screen.getAllByRole('button', { name: /MATH201-01 нельзя поставить/ })
+    await user.click(blocked[0])
+
+    expect(sectionCard('MATH201-01')).toHaveTextContent('1/2')
+    expect(status()).not.toHaveTextContent('Перетащите секцию')
+  })
+
+  it('после закрытия недельной нормы выбор снимается', async () => {
+    const user = open()
+
+    await user.click(sectionCard('MATH201-01'))
+    await user.click(screen.getAllByRole('button', { name: /^Поставить MATH201-01/ })[0])
+
+    expect(screen.queryByRole('button', { name: /^Поставить/ })).not.toBeInTheDocument()
+  })
+})
+
+describe('навигация по конфликтам', () => {
+  it('кнопка в шапке открывает занятие с конфликтом', async () => {
+    const user = open()
+
+    await user.click(screen.getByRole('button', { name: /следующее занятие с конфликтом/ }))
+
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).queryByText('Конфликтов нет')).not.toBeInTheDocument()
+  })
+
+  it('после починки занятия счётчик конфликтов уменьшается', async () => {
+    const user = open()
+    const before = screen.getByRole('button', { name: /следующее занятие с конфликтом/ }).textContent
+
+    await user.click(screen.getByRole('button', { name: /следующее занятие с конфликтом/ }))
+    await user.click(within(await screen.findByRole('dialog')).getByRole('button', { name: /Убрать/ }))
+
+    const after = screen.queryByRole('button', { name: /следующее занятие с конфликтом/ })?.textContent ?? null
+    expect(after).not.toBe(before)
   })
 })
 

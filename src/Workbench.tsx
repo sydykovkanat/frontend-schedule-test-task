@@ -48,13 +48,12 @@ function Board({ editingLessonId, onOpenLesson }: BoardProps) {
 
   return (
     <>
-      <div className="grid min-h-0 flex-1 gap-x-10 gap-y-8 lg:grid-cols-[19rem_minmax(0,1fr)]">
+      <main className="flex min-h-0 flex-1 flex-col max-lg:overflow-hidden lg:flex-row">
         <SectionsPanel />
-        <div className="flex min-h-0 min-w-0 flex-col gap-3">
-          <WeekGrid selectedLessonId={editingLessonId} onOpenLesson={onOpenLesson} />
-          <StatusBar />
-        </div>
-      </div>
+        <WeekGrid selectedLessonId={editingLessonId} onOpenLesson={onOpenLesson} />
+      </main>
+
+      <StatusBar />
 
       <LessonEditorDialog
         lessonId={editingLessonId}
@@ -71,8 +70,8 @@ export function Workbench() {
 
   return (
     <TooltipProvider>
-      <div className="mx-auto flex h-dvh w-full max-w-[110rem] flex-col gap-8 px-6 py-8 md:px-10">
-        <Toolbar />
+      <div className="bg-surface flex h-dvh w-full flex-col overflow-hidden">
+        <Toolbar onOpenLesson={setEditingLessonId} />
         <ScheduleDndProvider onRequestEdit={setEditingLessonId}>
           <Board editingLessonId={editingLessonId} onOpenLesson={setEditingLessonId} />
         </ScheduleDndProvider>
